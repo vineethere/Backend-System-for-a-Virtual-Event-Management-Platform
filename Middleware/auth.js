@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const isAuthorized = (req, res, next) => {
-    const token  = req.header.auhtorization;
+    const token  = req.headers.authorization;
+    // console.log(req.headers,"headerds",req.header);
     if(!token){
         return res.status(400).send({message:`Token is required`});
     }
@@ -12,12 +13,11 @@ const isAuthorized = (req, res, next) => {
         decodedToken = jwt.verify(token,JWT_SECRET);
     }
     catch(error){
-        req.status(400).send({message: `Invalid Token`});
+        return res.status(400).send({message: `Invalid Token`});
     }
-
 
     req.decodedToken = decodedToken;
     next();
 }
 
-module.exports = {isAuthorized};
+module.exports = isAuthorized;
