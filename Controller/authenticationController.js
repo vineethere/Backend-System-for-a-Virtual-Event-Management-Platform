@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken')
 const SALT_ROUNDS = 10;
 const { UsersData } = require('../Modal/UserModal')
 // const UsersData = [
@@ -16,26 +17,37 @@ const checkLoginCredentials = async (userName, password) => {
     const dbPassword = dbUser.password;
     isPasswordSame = await bcrypt.compare(password, dbPassword);
     if (!isPasswordSame) throw new Error('Password is not Wrong pls check');
-    const payload = {"username":userName,"email":email};
+    const payload = { "username": userName, "email": email };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
-    return {status:"ok",token};
+    return { status: "ok", token };
 }
 const isSuccessfullyRegistered = async (body) => {
+    if (!body) {
+        return "Request body is missing";
+    }
     let { username, password, email } = body;
     let error = "";
-    if (!username) error = "UserName is required";
-    else if (!password) error = "password is required to register";
-    else if (!email) error = "email is required to register";
-    else {
-        const hashedPassword = await bcrypt.hashSync(password, SALT_ROUNDS);
-        UsersData.push({
-            username: username,
-            password: hashedPassword,
-            email: email
-        })
+    try {
+        if (!username) error = "UserName is required";
+        else if (!password) error = "password is required to register";
+        else if (!email) error = "email is required to register";
+        else {
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            UsersData.push({
+                username: username,
+                password: hashedPassword,
+                email: email
+            })
+        }
+
+        return error;
+    }
+    catch (e) {
+        return e.message;
     }
 
-    return error;
+
+
 
 }
 
