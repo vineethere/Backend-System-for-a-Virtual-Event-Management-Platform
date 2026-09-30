@@ -5,7 +5,7 @@ const EventsData = [
     time: "10:00",
     description: "Annual tech conference",
     participants: ["user3@example.com", "user2@example.com"],
-    organizer: "vineet@example.com"  
+    organizer: "vineet@example.com"
   },
   {
     id: "event2",
