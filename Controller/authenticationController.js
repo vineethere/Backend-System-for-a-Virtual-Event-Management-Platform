@@ -16,7 +16,7 @@ const checkLoginCredentials = async (username, password) => {
     if (!dbUser) throw new Error("User didn't exist");
     const dbPassword = dbUser.password;
     isPasswordSame = await bcrypt.compare(password, dbPassword);
-    if (!isPasswordSame) throw new Error('Password is not Wrong pls check');
+    if (!isPasswordSame) throw new Error('Password is  Wrong pls check');
     const payload = { "username": username, "email": dbUser.email };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
     return { status: "ok", token };
