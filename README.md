@@ -1,8 +1,33 @@
 # Virtual Event Management Platform - Backend
 
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white) ![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white) ![JWT](https://img.shields.io/badge/JWT-000000?style=flat&logo=jsonwebtokens&logoColor=white) ![Jest](https://img.shields.io/badge/Jest-C21325?style=flat&logo=jest&logoColor=white)
+
 A REST API for running virtual events: user registration and authentication, event scheduling with role-based permissions, and attendee registration with email confirmation.
 
 Built with Node.js and Express. Written to be read - layered structure, one responsibility per module, and explicit error handling at the boundaries.
+
+---
+
+## Request flow
+
+```mermaid
+flowchart LR
+    C([Client]) -->|HTTP| A[app.js<br/>Express]
+    A --> R[Routes]
+    R --> M1{authenticate<br/>verify JWT}
+    M1 -->|no / bad token<br/>401| X[Error handler]
+    M1 -->|req.user set| M2{requireRole<br/>organizer?}
+    M2 -->|not permitted<br/>403| X
+    M2 --> V[validate payload]
+    V -->|invalid 400| X
+    V --> CT[Controller]
+    CT --> S[(Store<br/>users - events)]
+    CT --> RES([Response])
+    CT -.->|after response<br/>fire and forget| E[Nodemailer<br/>confirmation email]
+    X --> RES
+```
+
+Authentication, authorization and validation are three separate gates. Each one fails into the same central error handler, so the API returns one error shape regardless of where it broke.
 
 ---
 
@@ -19,15 +44,15 @@ Built with Node.js and Express. Written to be read - layered structure, one resp
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| POST | /register | - | Create an account |
-| POST | /login | - | Authenticate, returns JWT |
-| GET | /events | Yes | List events |
-| POST | /events | Organizer | Create an event |
-| PUT | /events/:id | Organizer | Update an event |
-| DELETE | /events/:id | Organizer | Delete an event |
-| POST | /events/:id/register | Yes | Register as an attendee |
+| `POST` | `/register` | - | Create an account |
+| `POST` | `/login` | - | Authenticate, returns JWT |
+| `GET` | `/events` | Yes | List events |
+| `POST` | `/events` | Organizer | Create an event |
+| `PUT` | `/events/:id` | Organizer | Update an event |
+| `DELETE` | `/events/:id` | Organizer | Delete an event |
+| `POST` | `/events/:id/register` | Yes | Register as an attendee |
 
-## Architecture
+## Project structure
 
 ```
 app.js          Express app, middleware chain, route mounting
@@ -45,7 +70,7 @@ The data layer sits behind functions rather than exposing raw structures directl
 
 **Why JWT.** Stateless, so the API scales horizontally without shared session storage. The trade-off is that a token cannot be revoked before it expires; short expiry is the mitigation, and a denylist would be the next step.
 
-**Authentication and authorization are separate middlewares.** authenticate establishes who you are; requireRole decides what you may do. Conflating them makes permissions impossible to reason about as roles grow. 401 for unauthenticated, 403 for authenticated-but-forbidden.
+**Authentication and authorization are separate middlewares.** `authenticate` establishes who you are; `requireRole` decides what you may do. Conflating them makes permissions impossible to reason about as roles grow. 401 for unauthenticated, 403 for authenticated-but-forbidden.
 
 **Email is fired after the response, not awaited in the request path.** Registration has already succeeded by then - a down mail server should not fail the user's request.
 
@@ -55,7 +80,7 @@ The data layer sits behind functions rather than exposing raw structures directl
 
 ```bash
 npm install
-cp .env.example .env
+cp .env.example .env    # fill in your values
 npm start
 npm run test
 ```
